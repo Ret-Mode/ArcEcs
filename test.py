@@ -8,19 +8,8 @@ import esper
 
 from dataclasses import dataclass as component
 
-
-class Position:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-class MovementProcessor(esper.Processor):
-
-    def process(self):
-        for _, pos in esper.get_component(Position):
-            pos.x += 1.0
-            pos.y += 1.0
-            print(pos.x, pos.y)
+import pymunk
+from ecs.ecs import SpriteProxy, World, PhysicsProcessor, WorldProcessor, DrawProcessor
 
 class GridDraw:
     
@@ -143,11 +132,24 @@ class Runner(arcade.Window):
 
     def __init__(self, width, height, title):
         super().__init__(width, height, title, resizable=True)
-        self.grid = esper.create_entity()
 
-        pos1 = Position(1000.0, 1000.0)
-        esper.add_component(self.grid, pos1)
-        esper.add_processor(MovementProcessor())
+        worldEnt = esper.create_entity()
+        world = World(False, (0.0, -10.0))
+        esper.add_component(worldEnt, world)
+
+        ent = esper.create_entity()
+
+        body = pymunk.Body()
+        circle = pymunk.Circle(body=body, radius=30)
+        circle.mass=6.0
+        world.world.add(body, circle)
+        body.position = 400, 400
+        body.mass = 400
+        self.proxy = SpriteProxy(arcade.Sprite('pinky.png'), body)
+        esper.add_component(ent, self.proxy)
+        esper.add_processor(WorldProcessor())
+        esper.add_processor(PhysicsProcessor())
+        esper.add_processor(DrawProcessor())
 
         # self.gridDraw = GridDraw(self.ctx)
         # self.vert = -0.3
@@ -157,12 +159,5 @@ class Runner(arcade.Window):
     def on_draw(self):
         self.clear()
         esper.process()
-        # self.gridDraw.updateVerts([self.vert+0.01, self.vert, self.vert-0.011, self.vert+0.3])
-        # self.gridDraw.updateParams([self.deltas, self.deltas], [self.color-0.03, 1.0-self.color, self.color])
-        # self.color += 0.005
-        
-        # self.deltas += 0.0005
-        # self.vert += 0.0001
-        #self.gridDraw.draw()
 
 Runner(800, 600, "ShaderTest").run()
