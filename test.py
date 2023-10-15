@@ -6,10 +6,8 @@ from arcade import ArcadeContext
 from typing import List, Tuple
 import esper
 
-from dataclasses import dataclass as component
-
 import pymunk
-from ecs.ecs import SpriteProxy, World, PhysicsProcessor, WorldProcessor, DrawProcessor
+from ecs.ecs import SpriteCom, PhysicsCom, World, PhysicsProcessor, DrawProcessor, MouseCom, MouseUtilsProcessor, MouseProcessor
 
 class GridDraw:
     
@@ -133,9 +131,9 @@ class Runner(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title, resizable=True)
 
-        worldEnt = esper.create_entity()
+        self.worldEnt = esper.create_entity()
         world = World(False, (0.0, -10.0))
-        esper.add_component(worldEnt, world)
+        esper.add_component(self.worldEnt, world)
 
         ent = esper.create_entity()
 
@@ -145,16 +143,24 @@ class Runner(arcade.Window):
         world.world.add(body, circle)
         body.position = 400, 400
         body.mass = 400
-        self.proxy = SpriteProxy(arcade.Sprite('pinky.png'), body)
-        esper.add_component(ent, self.proxy)
-        esper.add_processor(WorldProcessor())
+        
+        esper.add_component(ent, SpriteCom(arcade.Sprite('pinky.png')))
+        esper.add_component(ent, PhysicsCom(body))
         esper.add_processor(PhysicsProcessor())
         esper.add_processor(DrawProcessor())
 
+        MouseUtilsProcessor.set(MouseProcessor())
+        print(MouseUtilsProcessor.getInstance())
         # self.gridDraw = GridDraw(self.ctx)
         # self.vert = -0.3
         # self.color = 0.0
         # self.deltas = 0.001
+
+    def on_update(self, delta_time: float):
+        print(delta_time)
+        for _,world in esper.get_component(World):
+            world.world.step(world.dt)
+        return super().on_update(delta_time)
 
     def on_draw(self):
         self.clear()

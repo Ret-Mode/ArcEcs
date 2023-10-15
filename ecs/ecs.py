@@ -5,10 +5,44 @@ import pymunk
 from typing import Tuple
 
 
-class SpriteProxy:
+class UtilityProcessor:
 
-    def __init__(self, sprite:arcade.Sprite, body:pymunk.Body):
+    _p:esper.Processor = None
+
+    @classmethod
+    def getInstance(cls) -> esper.Processor:
+        return cls._p
+    
+    @classmethod
+    def set(cls, processor: esper.Processor) -> None:
+        cls._p = processor
+
+
+class MouseUtilsProcessor(UtilityProcessor):
+    ...
+
+
+class SpriteCom:
+
+    def __init__(self, sprite:arcade.Sprite):
         self.sprite = sprite
+
+
+class MouseCom:
+
+    def __init__(self):
+        self.lmb = False
+        self.mmb = False
+        self.rmb = False
+        self.dx = 0
+        self.dy = 0
+        self.mx = 0
+        self.my = 0
+
+
+class PhysicsCom:
+
+    def __init__(self, body:pymunk.Body):
         self.body = body
 
 
@@ -20,26 +54,26 @@ class World:
         self.dt = dt
 
 
-class WorldProcessor(esper.Processor):
-    
-    def process(self):
-        world:World
-        for _, world in esper.get_component(World):
-            world.world.step(world.dt)
-
-
 class PhysicsProcessor(esper.Processor):
 
     def process(self):
-        proxy: SpriteProxy
-        for _, proxy in esper.get_component(SpriteProxy):
-            print(proxy.body.position[0], proxy.body.position[1])
-            proxy.sprite.position = (proxy.body.position[0], proxy.body.position[1])
+        sprite: SpriteCom
+        body: PhysicsCom
+        for _, (sprite, body) in esper.get_components(SpriteCom, PhysicsCom):
+            print(body.body.position[0], body.body.position[1])
+            sprite.sprite.position = (body.body.position[0], body.body.position[1])
 
 
 class DrawProcessor(esper.Processor):
 
     def process(self):
-        proxy: SpriteProxy
-        for _, proxy in esper.get_component(SpriteProxy):
+        proxy: SpriteCom
+        for _, proxy in esper.get_component(SpriteCom):
             proxy.sprite.draw()
+
+
+class MouseProcessor(esper.Processor):
+
+    def process(self):
+        mouse:MouseCom
+
